@@ -1,0 +1,25 @@
+# Imagem base do ASP.NET Core 8 (runtime)
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+
+# Imagem SDK do .NET 8 para compilar a aplicação
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copia o csproj e restaura dependências
+COPY Users.Api.csproj ./
+RUN dotnet restore
+
+# Copia o resto do projeto
+COPY . .
+
+# Build e publish
+RUN dotnet publish -c Release -o /app/publish
+
+# Imagem final (runtime)
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "Users.Api.dll"]
